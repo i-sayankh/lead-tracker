@@ -1,0 +1,119 @@
+@import 'tailwindcss';
+
+/* Design tokens from DESIGN.md (Linear, adapted). Light is the default; dark follows the OS. */
+:root {
+  color-scheme: light dark;
+
+  --canvas: #ffffff;
+  --surface-1: #f7f8f8;
+  --surface-2: #f0f1f2;
+  --hairline: #e6e7e9;
+  --hairline-strong: #d4d6da;
+  --ink: #15161a;
+  --ink-muted: #3c3f45;
+  --ink-subtle: #62666d;
+  --primary: #5e6ad2;
+  --primary-hover: #4f5bc4;
+  --on-primary: #ffffff;
+  --danger: #c5362f;
+  --success: #27a644;
+  --scrim: rgb(0 0 0 / 0.5);
+
+  --status-new-bg: #e8eafb;
+  --status-new-fg: #3f48a8;
+  --status-contacted-bg: #fbf3db;
+  --status-contacted-fg: #7a5200;
+  --status-qualified-bg: #e6f4ea;
+  --status-qualified-fg: #1d6b35;
+  --status-lost-bg: #f1f1f2;
+  --status-lost-fg: #55585e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #010102;
+    --surface-1: #0f1011;
+    --surface-2: #141516;
+    --hairline: #23252a;
+    --hairline-strong: #34343a;
+    --ink: #f7f8f8;
+    --ink-muted: #d0d6e0;
+    --ink-subtle: #8a8f98;
+    --primary-hover: #828fff;
+    --danger: #ff7b72;
+    --scrim: rgb(0 0 0 / 0.7);
+
+    --status-new-bg: #1f2245;
+    --status-new-fg: #aab1ff;
+    --status-contacted-bg: #3a2e0f;
+    --status-contacted-fg: #f2c96b;
+    --status-qualified-bg: #12301c;
+    --status-qualified-fg: #6fd08c;
+    --status-lost-bg: #232428;
+    --status-lost-fg: #a4a8b0;
+  }
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+
+  --font-sans: 'SF Pro Display', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Type scale: headline, card-title, body-sm, caption */
+  --text-headline: 28px;
+  --text-headline--line-height: 1.2;
+  --text-headline--letter-spacing: -0.6px;
+  --text-card-title: 22px;
+  --text-card-title--line-height: 1.25;
+  --text-card-title--letter-spacing: -0.4px;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.5;
+  --text-caption: 12px;
+  --text-caption--line-height: 1.4;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+@layer base {
+  html {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  dialog::backdrop {
+    background: var(--scrim);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
