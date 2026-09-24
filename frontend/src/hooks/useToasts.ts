@@ -6,7 +6,7 @@ export interface Toast {
   tone: 'success' | 'error'
 }
 
-export const TOAST_DURATION_MS = 4000
+const TOAST_DURATION_MS = 4000
 
 export function useToasts() {
   const [toasts, setToasts] = useState<Toast[]>([])

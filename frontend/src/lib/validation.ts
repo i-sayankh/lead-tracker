@@ -8,7 +8,7 @@ export type FieldErrors = Partial<Record<LeadField, string>>
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PHONE = /^\+?[0-9]{7,15}$/
 const PHONE_SEPARATORS = /[\s\-.()]/g
-export const PHONE_RULE = 'Phone must contain 7–15 digits, optionally prefixed with +'
+const PHONE_RULE = 'Phone must contain 7–15 digits, optionally prefixed with +'
 
 export function validateLead(values: LeadCreate): FieldErrors {
   const errors: FieldErrors = {}

@@ -4,8 +4,8 @@ import { STATUS_LABEL } from '../lib/status'
 import { fieldFromApi, validateLead, type FieldErrors, type LeadField } from '../lib/validation'
 import { primaryButton, secondaryButton } from './buttons'
 
+/** Mount only while the dialog should be open; unmounting cancels an in-flight create. */
 interface Props {
-  open: boolean
   onClose: () => void
   onCreated: (lead: Lead) => void
 }
@@ -38,7 +38,7 @@ const TEXT_FIELDS: {
 const input =
   'h-10 w-full rounded-md border bg-surface-1 px-3 text-body-sm text-ink placeholder:text-ink-subtle focus-visible:border-primary aria-[invalid=true]:border-danger'
 
-export function LeadForm({ open, onClose, onCreated }: Props) {
+export function LeadForm({ onClose, onCreated }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const [values, setValues] = useState<LeadCreate>(EMPTY)
@@ -46,21 +46,15 @@ export function LeadForm({ open, onClose, onCreated }: Props) {
   const [serverErrors, setServerErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const submission = useRef<AbortController | null>(null)
   const id = useId()
 
   useEffect(() => {
     const dialog = dialogRef.current
-    if (!dialog) return
-    if (open && !dialog.open) dialog.showModal()
-    if (!open && dialog.open) dialog.close()
-  }, [open])
-
-  function reset() {
-    setValues(EMPTY)
-    setTouched({})
-    setServerErrors({})
-    setFormError(null)
-  }
+    if (dialog && !dialog.open) dialog.showModal()
+    // A response that arrives after the form is gone must not act on the page any more.
+    return () => submission.current?.abort()
+  }, [])
 
   const clientErrors = validateLead(values)
   const errorFor = (field: LeadField) =>
@@ -82,16 +76,21 @@ export function LeadForm({ open, onClose, onCreated }: Props) {
     }
 
     setSubmitting(true)
+    const controller = new AbortController()
+    submission.current = controller
     try {
-      const lead = await createLead({
-        name: values.name.trim(),
-        email: values.email.trim(),
-        phone: values.phone.trim(),
-        status: values.status,
-      })
-      reset()
-      onCreated(lead)
+      const lead = await createLead(
+        {
+          name: values.name.trim(),
+          email: values.email.trim(),
+          phone: values.phone.trim(),
+          status: values.status,
+        },
+        controller.signal,
+      )
+      if (!controller.signal.aborted) onCreated(lead)
     } catch (err) {
+      if (controller.signal.aborted) return
       if (!(err instanceof ApiError)) {
         setFormError('Something went wrong. Please try again.')
       } else if (err.code === 'LEAD_EMAIL_CONFLICT') {
@@ -116,10 +115,7 @@ export function LeadForm({ open, onClose, onCreated }: Props) {
     <dialog
       ref={dialogRef}
       aria-labelledby={`${id}-title`}
-      onClose={() => {
-        reset()
-        onClose()
-      }}
+      onClose={onClose}
       className="m-auto w-[calc(100%-2rem)] overscroll-contain max-w-md rounded-lg border border-hairline bg-canvas p-0 text-ink"
     >
       <form ref={formRef} noValidate onSubmit={handleSubmit} className="flex flex-col gap-5 p-6">

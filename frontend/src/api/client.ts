@@ -39,6 +39,10 @@ function isErrorResponse(body: unknown): body is ErrorResponse {
   return typeof error === 'object' && error !== null && 'code' in error && 'message' in error
 }
 
+function isAbort(err: unknown): boolean {
+  return err instanceof DOMException && err.name === 'AbortError'
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response
   try {
@@ -47,12 +51,29 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: init.body ? { 'Content-Type': 'application/json' } : undefined,
     })
   } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') throw err
+    if (isAbort(err)) throw err
     throw new ApiError(0, 'NETWORK_ERROR', 'Could not reach the server. Check your connection.')
   }
 
-  const body: unknown = await response.json().catch(() => null)
-  if (response.ok) return body as T
+  let body: unknown
+  try {
+    body = await response.json()
+  } catch (err) {
+    if (isAbort(err)) throw err
+    body = null
+  }
+  if (response.ok) {
+    // A 2xx without a JSON body means we are not talking to this API (e.g. a wrong base URL
+    // serving an HTML page); never hand callers `null` typed as data.
+    if (body === null) {
+      throw new ApiError(
+        response.status,
+        'INTERNAL_ERROR',
+        'The server sent an unexpected response.',
+      )
+    }
+    return body as T
+  }
   if (isErrorResponse(body)) {
     const { code, message, details } = body.error
     throw new ApiError(response.status, code, message, details ?? [])
@@ -69,8 +90,8 @@ export function listLeads(params: ListLeadsParams, signal?: AbortSignal): Promis
   return request<LeadPage>(`/api/v1/leads${qs ? `?${qs}` : ''}`, { signal })
 }
 
-export function createLead(body: LeadCreate): Promise<Lead> {
-  return request<Lead>('/api/v1/leads', { method: 'POST', body: JSON.stringify(body) })
+export function createLead(body: LeadCreate, signal?: AbortSignal): Promise<Lead> {
+  return request<Lead>('/api/v1/leads', { method: 'POST', body: JSON.stringify(body), signal })
 }
 
 export function updateLeadStatus(id: string, status: LeadStatus): Promise<Lead> {

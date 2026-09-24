@@ -8,7 +8,7 @@ import { Toasts } from './components/Toasts'
 import { Toolbar } from './components/Toolbar'
 import { primaryButton, secondaryButton } from './components/buttons'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
-import { PAGE_SIZE, useLeads } from './hooks/useLeads'
+import { useLeads } from './hooks/useLeads'
 import { useToasts } from './hooks/useToasts'
 import { useUrlState } from './hooks/useUrlState'
 import { STATUS_LABEL } from './lib/status'
@@ -29,7 +29,7 @@ export default function App() {
   // A shared link or a shrinking result set can point past the last page.
   useEffect(() => {
     if (data && data.items.length === 0 && data.total > 0 && view.page > 1) {
-      setView({ page: Math.ceil(data.total / PAGE_SIZE) })
+      setView({ page: Math.ceil(data.total / data.limit) })
     }
   }, [data, view.page, setView])
 
@@ -38,7 +38,9 @@ export default function App() {
   const openCreate = () => setCreateOpen(true)
 
   let content
-  if (error && !data) {
+  // An error for the current query wins over the previous query's data, which would
+  // otherwise be shown under filters it does not match.
+  if (error) {
     content = (
       <EmptyState
         tone="error"
@@ -51,7 +53,8 @@ export default function App() {
         }
       />
     )
-  } else if (!data) {
+  } else if (!data || (loading && data.total === 0)) {
+    // Never judge "empty" from the previous query's result while the next one loads.
     content = <LeadTableSkeleton />
   } else if (data.total === 0 && !hasFilters) {
     content = (
@@ -94,8 +97,8 @@ export default function App() {
           />
         </div>
         <Pagination
-          page={view.page}
-          pageSize={PAGE_SIZE}
+          page={Math.floor(data.offset / data.limit) + 1}
+          pageSize={data.limit}
           total={data.total}
           onPageChange={(page) => setView({ page })}
         />
@@ -141,30 +144,24 @@ export default function App() {
           Waking up the server — the free tier sleeps when idle (up to ~50s)…
         </p>
       )}
-      {error && data && (
-        <p role="alert" className="text-body-sm text-danger">
-          {error.message}{' '}
-          <button type="button" className="font-medium underline" onClick={reload}>
-            Retry
-          </button>
-        </p>
-      )}
 
       <main id="leads" tabIndex={-1} className="focus:outline-none">
         {content}
       </main>
 
-      <LeadForm
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={() => {
-          setCreateOpen(false)
-          toast('Lead created')
-          // Newest first, so the new lead is at the top of page 1 of the unfiltered list.
-          setView({ page: 1 })
-          reload()
-        }}
-      />
+      {/* Mounted per open: every open starts blank, and closing cancels a pending create. */}
+      {createOpen && (
+        <LeadForm
+          onClose={() => setCreateOpen(false)}
+          onCreated={() => {
+            setCreateOpen(false)
+            toast('Lead created')
+            // Newest first and unfiltered, so the new lead is the first row.
+            clearFilters()
+            reload()
+          }}
+        />
+      )}
       <Toasts toasts={toasts} onDismiss={dismiss} />
     </div>
   )

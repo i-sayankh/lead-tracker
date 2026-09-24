@@ -23,6 +23,13 @@ class Settings(BaseSettings):
                 return "postgresql+psycopg://" + value.removeprefix(prefix)
         return value
 
+    @field_validator("cors_origins_raw")
+    @classmethod
+    def reject_wildcard_origin(cls, value: str) -> str:
+        if "*" in (o.strip() for o in value.split(",")):
+            raise ValueError("CORS_ORIGINS must list explicit origins; '*' is not allowed")
+        return value
+
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.cors_origins_raw.split(",") if o.strip()]

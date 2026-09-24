@@ -5,10 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.errors import LeadEmailConflictError, LeadNotFoundError
-from app.models import Lead
-from app.schemas import LeadCreate, LeadStatus
-
-EMAIL_UNIQUE_CONSTRAINT = "uq_leads_email"
+from app.models import EMAIL_UNIQUE_CONSTRAINT, Lead
+from app.schemas import PHONE_SEPARATORS, LeadCreate, LeadStatus
 
 
 def create_lead(db: Session, data: LeadCreate) -> Lead:
@@ -23,7 +21,6 @@ def create_lead(db: Session, data: LeadCreate) -> Lead:
         if EMAIL_UNIQUE_CONSTRAINT in str(exc.orig):
             raise LeadEmailConflictError(data.email) from exc
         raise
-    db.refresh(lead)
     return lead
 
 
@@ -39,13 +36,16 @@ def list_leads(
     filters = []
     if q:
         pattern = f"%{_escape_like(q)}%"
-        filters.append(
-            or_(
-                Lead.name.ilike(pattern, escape="\\"),
-                Lead.email.ilike(pattern, escape="\\"),
-                Lead.phone.ilike(pattern, escape="\\"),
-            )
-        )
+        matches = [
+            Lead.name.ilike(pattern, escape="\\"),
+            Lead.email.ilike(pattern, escape="\\"),
+        ]
+        # Phones are stored normalized, so strip the same separators from the search
+        # term: "98200 11223" must find "+919820011223".
+        phone_q = PHONE_SEPARATORS.sub("", q)
+        if phone_q:
+            matches.append(Lead.phone.ilike(f"%{_escape_like(phone_q)}%", escape="\\"))
+        filters.append(or_(*matches))
     if status is not None:
         filters.append(Lead.status == status)
 

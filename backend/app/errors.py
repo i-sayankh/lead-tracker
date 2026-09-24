@@ -7,8 +7,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 logger = logging.getLogger("app.errors")
+
+# Shared by the handlers and the OpenAPI examples so the docs match what is sent.
+VALIDATION_FAILED_MESSAGE = "Request validation failed."
+INTERNAL_ERROR_MESSAGE = "An unexpected error occurred."
+DATABASE_UNREACHABLE_MESSAGE = "Database is unreachable."
 
 
 class ErrorCode(StrEnum):
@@ -110,7 +116,7 @@ class ServiceUnavailableError(AppError):
     code = ErrorCode.SERVICE_UNAVAILABLE
 
     def __init__(self) -> None:
-        super().__init__("Database is unreachable.")
+        super().__init__(DATABASE_UNREACHABLE_MESSAGE)
 
 
 def _envelope(
@@ -135,7 +141,7 @@ async def _validation_error_handler(_: Request, exc: Exception) -> JSONResponse:
         )
         for err in exc.errors()
     ]
-    return _envelope(422, ErrorCode.VALIDATION_ERROR, "Request validation failed.", details)
+    return _envelope(422, ErrorCode.VALIDATION_ERROR, VALIDATION_FAILED_MESSAGE, details)
 
 
 async def _http_error_handler(_: Request, exc: Exception) -> JSONResponse:
@@ -145,20 +151,48 @@ async def _http_error_handler(_: Request, exc: Exception) -> JSONResponse:
     if exc.status_code == 405:
         return _envelope(405, ErrorCode.METHOD_NOT_ALLOWED, "Method not allowed.")
     logger.error("Unexpected HTTP %s: %s", exc.status_code, exc.detail)
-    return _envelope(500, ErrorCode.INTERNAL_ERROR, "An unexpected error occurred.")
+    return _envelope(500, ErrorCode.INTERNAL_ERROR, INTERNAL_ERROR_MESSAGE)
 
 
-async def _unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
-    # Log the traceback server-side; never leak exception text to the client.
-    logger.exception("Unhandled error on %s %s", request.method, request.url.path, exc_info=exc)
-    return _envelope(500, ErrorCode.INTERNAL_ERROR, "An unexpected error occurred.")
+class CatchUnhandledErrors:
+    """ASGI middleware turning any unhandled exception into the 500 envelope.
+
+    A middleware rather than an `Exception` handler: Starlette runs `Exception` handlers
+    outside every user middleware, so those 500s would miss the CORS headers and the browser
+    would report a network error instead of showing the envelope. Add it *inside* CORS.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        response_started = False
+
+        async def track(message: Message) -> None:
+            nonlocal response_started
+            if message["type"] == "http.response.start":
+                response_started = True
+            await send(message)
+
+        try:
+            await self.app(scope, receive, track)
+        except Exception:
+            # Log the traceback server-side; never leak exception text to the client.
+            logger.exception("Unhandled error on %s %s", scope["method"], scope["path"])
+            if response_started:
+                raise
+            response = _envelope(500, ErrorCode.INTERNAL_ERROR, INTERNAL_ERROR_MESSAGE)
+            await response(scope, receive, send)
 
 
 def register_error_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppError, _app_error_handler)
     app.add_exception_handler(RequestValidationError, _validation_error_handler)
     app.add_exception_handler(StarletteHTTPException, _http_error_handler)
-    app.add_exception_handler(Exception, _unhandled_error_handler)
 
 
 # --- OpenAPI documentation helpers -------------------------------------------------------------
@@ -216,7 +250,7 @@ _DEFAULTS: dict[int, tuple[str, dict[str, Example]]] = {
         "Unexpected server error. The cause is logged server-side and never returned.",
         {
             "internal_error": error_example(
-                "Unexpected error", ErrorCode.INTERNAL_ERROR, "An unexpected error occurred."
+                "Unexpected error", ErrorCode.INTERNAL_ERROR, INTERNAL_ERROR_MESSAGE
             )
         },
     ),
@@ -224,7 +258,7 @@ _DEFAULTS: dict[int, tuple[str, dict[str, Example]]] = {
         "The database is unreachable.",
         {
             "database_unreachable": error_example(
-                "Database down", ErrorCode.SERVICE_UNAVAILABLE, "Database is unreachable."
+                "Database down", ErrorCode.SERVICE_UNAVAILABLE, DATABASE_UNREACHABLE_MESSAGE
             )
         },
     ),

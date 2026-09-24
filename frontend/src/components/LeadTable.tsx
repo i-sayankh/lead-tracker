@@ -1,12 +1,11 @@
 import type { ReactNode } from 'react'
 import type { Lead } from '../api/client'
 import { formatAbsolute, formatRelative } from '../lib/format'
-import { STATUS_LABEL, STATUS_PILL } from '../lib/status'
 
 interface Props {
   leads: Lead[]
-  /** Renders the status cell; defaults to a read-only pill. */
-  renderStatus?: (lead: Lead) => ReactNode
+  /** Renders the status cell (the inline status editor). */
+  renderStatus: (lead: Lead) => ReactNode
 }
 
 const COLUMNS = ['Name', 'Email', 'Phone', 'Status', 'Created'] as const
@@ -15,16 +14,6 @@ const COLUMNS = ['Name', 'Email', 'Phone', 'Status', 'Created'] as const
 // name via data-label so there is a single DOM for screen readers and tests.
 const cell =
   'px-4 py-3 align-middle max-sm:flex max-sm:items-center max-sm:justify-between max-sm:gap-4 max-sm:px-0 max-sm:py-1 max-sm:before:text-caption max-sm:before:text-ink-subtle max-sm:before:content-[attr(data-label)]'
-
-export function StatusPill({ status }: { status: Lead['status'] }) {
-  return (
-    <span
-      className={`inline-flex h-6 items-center rounded-full px-2.5 text-caption font-medium ${STATUS_PILL[status]}`}
-    >
-      {STATUS_LABEL[status]}
-    </span>
-  )
-}
 
 export function LeadTable({ leads, renderStatus }: Props) {
   return (
@@ -66,7 +55,7 @@ export function LeadTable({ leads, renderStatus }: Props) {
               </a>
             </td>
             <td data-label="Status" className={cell}>
-              {renderStatus ? renderStatus(lead) : <StatusPill status={lead.status} />}
+              {renderStatus(lead)}
             </td>
             <td data-label="Created" className={`${cell} whitespace-nowrap text-ink-subtle`}>
               <time dateTime={lead.created_at} title={formatAbsolute(lead.created_at)}>
@@ -80,10 +69,12 @@ export function LeadTable({ leads, renderStatus }: Props) {
   )
 }
 
-export function LeadTableSkeleton({ rows = 5 }: { rows?: number }) {
+const SKELETON_ROWS = 5
+
+export function LeadTableSkeleton() {
   return (
     <div role="status" aria-label="Loading leads" className="flex flex-col">
-      {Array.from({ length: rows }, (_, i) => (
+      {Array.from({ length: SKELETON_ROWS }, (_, i) => (
         <div key={i} className="flex h-12 items-center gap-6 border-b border-hairline px-4">
           {['w-32', 'w-48', 'w-28', 'w-20', 'w-16'].map((w) => (
             <div key={w} className={`h-3 ${w} animate-pulse rounded-xs bg-surface-2`} />

@@ -1,38 +1,22 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import type { Lead } from '../api/client'
 import { LeadForm } from '../components/LeadForm'
-import { json, lead, mockFetch } from '../test/fetch'
+import { emailConflict, errorBody, json, lead, mockFetch } from '../test/fetch'
+import { fillAndSubmitLead as fillAndSubmit } from '../test/form'
 
+/** Mirrors App: the form is mounted only while open. */
 function Harness({ onCreated }: { onCreated: (lead: Lead) => void }) {
   const [open, setOpen] = useState(true)
-  return (
+  return open ? (
     <LeadForm
-      open={open}
       onClose={() => setOpen(false)}
       onCreated={(created) => {
         setOpen(false)
         onCreated(created)
       }}
     />
-  )
-}
-
-async function fillAndSubmit(values: { name: string; email: string; phone: string }) {
-  const user = userEvent.setup()
-  await user.type(screen.getByLabelText('Name'), values.name)
-  await user.type(screen.getByLabelText('Email'), values.email)
-  await user.type(screen.getByLabelText('Phone'), values.phone)
-  await user.click(screen.getByRole('button', { name: 'Create lead' }))
-}
-
-const conflict = {
-  error: {
-    code: 'LEAD_EMAIL_CONFLICT',
-    message: "A lead with email 'priya@finlytics.in' already exists.",
-    details: [{ field: 'body.email', message: 'Email already exists', type: 'conflict' }],
-  },
+  ) : null
 }
 
 describe('LeadForm', () => {
@@ -53,7 +37,7 @@ describe('LeadForm', () => {
   })
 
   it('shows a server 409 under the email field', async () => {
-    mockFetch(() => json(409, conflict))
+    mockFetch(() => json(409, emailConflict))
     render(<Harness onCreated={vi.fn()} />)
 
     await fillAndSubmit({
@@ -71,13 +55,12 @@ describe('LeadForm', () => {
 
   it('maps server validation details onto the matching field', async () => {
     mockFetch(() =>
-      json(422, {
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Request validation failed.',
-          details: [{ field: 'body.name', message: 'Name is reserved', type: 'value_error' }],
-        },
-      }),
+      json(
+        422,
+        errorBody('VALIDATION_ERROR', 'Request validation failed.', [
+          { field: 'body.name', message: 'Name is reserved', type: 'value_error' },
+        ]),
+      ),
     )
     render(<Harness onCreated={vi.fn()} />)
 

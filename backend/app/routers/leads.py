@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app import services
 from app.db import get_db
-from app.errors import ErrorCode, error_example, error_responses
+from app.errors import VALIDATION_FAILED_MESSAGE, ErrorCode, error_example, error_responses
 from app.models import Lead
 from app.schemas import PHONE_RULE, LeadCreate, LeadPage, LeadRead, LeadStatus, LeadStatusUpdate
 
@@ -14,8 +14,11 @@ router = APIRouter(prefix="/leads", tags=["leads"])
 
 DbSession = Annotated[Session, Depends(get_db)]
 
+# Keeps offsets far below Postgres' bigint limit (larger values would be a 500, not a 422).
+MAX_OFFSET = 1_000_000
+
 VALIDATION = ErrorCode.VALIDATION_ERROR
-FAILED = "Request validation failed."
+FAILED = VALIDATION_FAILED_MESSAGE
 
 
 @router.post(
@@ -156,7 +159,8 @@ def list_leads(
         int,
         Query(
             ge=0,
-            description="Number of matching leads to skip.",
+            le=MAX_OFFSET,
+            description=f"Number of matching leads to skip (0–{MAX_OFFSET:,}).",
             openapi_examples={"first_page": {"summary": "First page", "value": 0}},
         ),
     ] = 0,

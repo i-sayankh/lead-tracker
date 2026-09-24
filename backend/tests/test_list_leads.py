@@ -116,3 +116,18 @@ def test_list_leads_rejects_invalid_query_parameters(
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "VALIDATION_ERROR"
     assert response.json()["error"]["details"][0]["field"] == field
+
+
+def test_search_matches_phone_typed_with_separators(client: TestClient) -> None:
+    create(client, "Jane Cooper", "jane@acme.com", "+91 98200 11223")
+    create(client, "Robert Fox", "robert@globex.io", "+14155550123")
+
+    assert names(client.get(URL, params={"q": "98200 11223"})) == ["Jane Cooper"]
+    assert names(client.get(URL, params={"q": "(415) 555-0123"})) == ["Robert Fox"]
+
+
+def test_list_leads_rejects_offset_beyond_supported_range(client: TestClient) -> None:
+    response = client.get(URL, params={"offset": 10**19})
+
+    assert response.status_code == 422
+    assert response.json()["error"]["details"][0]["field"] == "query.offset"

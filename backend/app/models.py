@@ -8,11 +8,15 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db import Base
 from app.schemas import LeadStatus
 
+EMAIL_UNIQUE_CONSTRAINT = "uq_leads_email"
+
 
 class Lead(Base):
     __tablename__ = "leads"
+    # Fetch server defaults (created_at, status) via INSERT ... RETURNING, not a second SELECT.
+    __mapper_args__ = {"eager_defaults": True}
     __table_args__ = (
-        UniqueConstraint("email", name="uq_leads_email"),
+        UniqueConstraint("email", name=EMAIL_UNIQUE_CONSTRAINT),
         Index("ix_leads_created_at", text("created_at DESC"), text("id DESC")),
         Index("ix_leads_status", "status"),
     )

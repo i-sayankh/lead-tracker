@@ -1,17 +1,9 @@
 import { ApiError, createLead, listLeads } from '../api/client'
-import { json, lead, mockFetch, page } from '../test/fetch'
+import { emailConflict, json, lead, mockFetch, page } from '../test/fetch'
 
 describe('api client', () => {
   it('parses the error envelope into an ApiError', async () => {
-    mockFetch(() =>
-      json(409, {
-        error: {
-          code: 'LEAD_EMAIL_CONFLICT',
-          message: "A lead with email 'priya@finlytics.in' already exists.",
-          details: [{ field: 'body.email', message: 'Email already exists', type: 'conflict' }],
-        },
-      }),
-    )
+    mockFetch(() => json(409, emailConflict))
 
     const error = await createLead({
       name: 'Priya',
@@ -38,6 +30,23 @@ describe('api client', () => {
     mockFetch(() => new Response('<html>Bad gateway</html>', { status: 502 }))
 
     await expect(listLeads({})).rejects.toMatchObject({ status: 502, code: 'INTERNAL_ERROR' })
+  })
+
+  it('rejects a successful response whose body is not JSON instead of returning null', async () => {
+    mockFetch(() => new Response('<!doctype html><html></html>', { status: 200 }))
+
+    await expect(listLeads({})).rejects.toMatchObject({ status: 200, code: 'INTERNAL_ERROR' })
+  })
+
+  it('propagates an abort that happens while the body is being read', async () => {
+    const abort = new DOMException('The operation was aborted.', 'AbortError')
+    mockFetch(() => {
+      const response = new Response('{}', { status: 200 })
+      vi.spyOn(response, 'json').mockRejectedValue(abort)
+      return response
+    })
+
+    await expect(listLeads({})).rejects.toBe(abort)
   })
 
   it('sends only the list parameters that are set', async () => {

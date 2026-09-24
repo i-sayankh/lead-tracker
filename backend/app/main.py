@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from app.config import get_settings
-from app.errors import register_error_handlers
+from app.errors import CatchUnhandledErrors, register_error_handlers
 from app.routers import health, leads
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -82,6 +82,10 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
         generate_unique_id_function=lambda route: route.name,
     )
+    register_error_handlers(app)
+    # Order matters: middleware added last is outermost, so CORS wraps the 500 catch-all
+    # and even unexpected errors reach the browser with CORS headers.
+    app.add_middleware(CatchUnhandledErrors)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -89,7 +93,6 @@ def create_app() -> FastAPI:
         allow_headers=["Content-Type"],
         allow_credentials=False,
     )
-    register_error_handlers(app)
     app.include_router(leads.router, prefix=API_PREFIX)
     app.include_router(health.router, prefix=API_PREFIX)
 

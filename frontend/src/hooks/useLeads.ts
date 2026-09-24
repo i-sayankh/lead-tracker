@@ -11,7 +11,7 @@ interface Query {
   page: number
 }
 
-export interface LeadsResult {
+interface LeadsResult {
   /** Last successfully loaded page; kept while the next one loads. */
   data: LeadPage | null
   /** Error for the current query, if its request failed. */
@@ -44,6 +44,7 @@ export function useLeads({ q, status, page }: Query): LeadsResult {
       controller.signal,
     )
       .then((result) => {
+        if (controller.signal.aborted) return
         setData(result)
         setSettled({ key, error: null })
       })

@@ -4,543 +4,536 @@
  */
 
 export interface paths {
-  '/api/v1/health': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /**
-     * Check API and database health
-     * @description Runs `SELECT 1` against the database. Used as the deployment health check.
-     *
-     *     **Errors**
-     *
-     *     - `503 SERVICE_UNAVAILABLE`: the database cannot be reached.
-     */
-    get: operations['health_check']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v1/leads': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /**
-     * List and search leads
-     * @description Returns one page of leads ordered newest first (`created_at` descending, then `id`).
-     *
-     *     - `q` does a case-insensitive substring match on name, email **or** phone. `%` and `_` are matched literally. An empty or whitespace-only `q` means no filter.
-     *     - `status` keeps only leads in that stage. It combines with `q`.
-     *     - `total` is the number of leads matching the filters, ignoring `limit`/`offset`.
-     *
-     *     **Errors**
-     *
-     *     - `422 VALIDATION_ERROR`: a query parameter is out of bounds or not an allowed value.
-     *     - `500 INTERNAL_ERROR`: unexpected server error.
-     */
-    get: operations['list_leads']
-    put?: never
-    /**
-     * Create a lead
-     * @description Creates a lead with status `new` unless another status is given.
-     *
-     *     - `email` is lowercased and must be unique (case-insensitive).
-     *     - `phone` is normalized by removing spaces, dashes, dots and parentheses; the result must be 7–15 digits, optionally prefixed with `+`.
-     *     - Unknown fields are rejected.
-     *
-     *     **Errors**
-     *
-     *     - `409 LEAD_EMAIL_CONFLICT`: a lead with this email already exists.
-     *     - `422 VALIDATION_ERROR`: a field is missing or invalid, the body is not valid JSON, or it contains an unknown field. `details` names each field.
-     *     - `500 INTERNAL_ERROR`: unexpected server error.
-     */
-    post: operations['create_lead']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/api/v1/leads/{lead_id}/status': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    /**
-     * Update a lead's status
-     * @description Sets the pipeline stage of one lead and returns the updated lead.
-     *
-     *     - Any status may follow any other (there is no enforced transition order).
-     *     - Setting the status a lead already has is an idempotent success (`200`).
-     *
-     *     **Errors**
-     *
-     *     - `404 LEAD_NOT_FOUND`: no lead has this id.
-     *     - `422 VALIDATION_ERROR`: `lead_id` is not a UUID, the body is missing, `status` is missing or not an allowed value, or the body has an unknown field.
-     *     - `500 INTERNAL_ERROR`: unexpected server error.
-     */
-    patch: operations['update_lead_status']
-    trace?: never
-  }
+    "/api/v1/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Check API and database health
+         * @description Runs `SELECT 1` against the database. Used as the deployment health check.
+         *
+         *     **Errors**
+         *
+         *     - `503 SERVICE_UNAVAILABLE`: the database cannot be reached.
+         */
+        get: operations["health_check"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List and search leads
+         * @description Returns one page of leads ordered newest first (`created_at` descending, then `id`).
+         *
+         *     - `q` does a case-insensitive substring match on name, email **or** phone. `%` and `_` are matched literally. An empty or whitespace-only `q` means no filter.
+         *     - `status` keeps only leads in that stage. It combines with `q`.
+         *     - `total` is the number of leads matching the filters, ignoring `limit`/`offset`.
+         *
+         *     **Errors**
+         *
+         *     - `422 VALIDATION_ERROR`: a query parameter is out of bounds or not an allowed value.
+         *     - `500 INTERNAL_ERROR`: unexpected server error.
+         */
+        get: operations["list_leads"];
+        put?: never;
+        /**
+         * Create a lead
+         * @description Creates a lead with status `new` unless another status is given.
+         *
+         *     - `email` is lowercased and must be unique (case-insensitive).
+         *     - `phone` is normalized by removing spaces, dashes, dots and parentheses; the result must be 7–15 digits, optionally prefixed with `+`.
+         *     - Unknown fields are rejected.
+         *
+         *     **Errors**
+         *
+         *     - `409 LEAD_EMAIL_CONFLICT`: a lead with this email already exists.
+         *     - `422 VALIDATION_ERROR`: a field is missing or invalid, the body is not valid JSON, or it contains an unknown field. `details` names each field.
+         *     - `500 INTERNAL_ERROR`: unexpected server error.
+         */
+        post: operations["create_lead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leads/{lead_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a lead's status
+         * @description Sets the pipeline stage of one lead and returns the updated lead.
+         *
+         *     - Any status may follow any other (there is no enforced transition order).
+         *     - Setting the status a lead already has is an idempotent success (`200`).
+         *
+         *     **Errors**
+         *
+         *     - `404 LEAD_NOT_FOUND`: no lead has this id.
+         *     - `422 VALIDATION_ERROR`: `lead_id` is not a UUID, the body is missing, `status` is missing or not an allowed value, or the body has an unknown field.
+         *     - `500 INTERNAL_ERROR`: unexpected server error.
+         */
+        patch: operations["update_lead_status"];
+        trace?: never;
+    };
 }
-export type webhooks = Record<string, never>
+export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /**
-     * ErrorBody
-     * @description Error payload.
-     */
-    ErrorBody: {
-      /**
-       * @description Machine-readable error code.
-       * @example LEAD_NOT_FOUND
-       */
-      code: components['schemas']['ErrorCode']
-      /**
-       * Details
-       * @description Per-field problems for validation and conflict errors; otherwise `null`.
-       */
-      details?: components['schemas']['ErrorDetail'][] | null
-      /**
-       * Message
-       * @description Human-readable summary of the error.
-       * @example Lead '3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21' was not found.
-       */
-      message: string
-    }
-    /**
-     * ErrorCode
-     * @description Machine-readable error code. Clients should branch on this, not on `message`.
-     * @enum {string}
-     */
-    ErrorCode:
-      | 'VALIDATION_ERROR'
-      | 'LEAD_NOT_FOUND'
-      | 'LEAD_EMAIL_CONFLICT'
-      | 'ROUTE_NOT_FOUND'
-      | 'METHOD_NOT_ALLOWED'
-      | 'SERVICE_UNAVAILABLE'
-      | 'INTERNAL_ERROR'
-    /**
-     * ErrorDetail
-     * @description A problem with one input field.
-     */
-    ErrorDetail: {
-      /**
-       * Field
-       * @description Dotted location of the invalid input, e.g. `body.email` or `query.limit`.
-       * @example body.email
-       */
-      field: string
-      /**
-       * Message
-       * @description Human-readable explanation.
-       * @example value is not a valid email address: An email address must have an @-sign.
-       */
-      message: string
-      /**
-       * Type
-       * @description Error type, e.g. `missing`, `value_error`, `conflict`.
-       * @example value_error
-       */
-      type: string
-    }
-    /**
-     * ErrorResponse
-     * @description Envelope used by every non-2xx response.
-     * @example {
-     *       "error": {
-     *         "code": "LEAD_NOT_FOUND",
-     *         "message": "Lead '3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21' was not found."
-     *       }
-     *     }
-     */
-    ErrorResponse: {
-      /** @description The error that occurred. */
-      error: components['schemas']['ErrorBody']
-    }
-    /**
-     * HealthResponse
-     * @description Service health, including database connectivity.
-     * @example {
-     *       "database": "ok",
-     *       "status": "ok"
-     *     }
-     */
-    HealthResponse: {
-      /**
-       * Database
-       * @description Database connectivity status.
-       * @example ok
-       * @constant
-       */
-      database: 'ok'
-      /**
-       * Status
-       * @description Overall API status.
-       * @example ok
-       * @constant
-       */
-      status: 'ok'
-    }
-    /**
-     * LeadCreate
-     * @description Request body for creating a lead. Unknown fields are rejected.
-     * @example {
-     *       "email": "Jane@Acme.com",
-     *       "name": "Jane Cooper",
-     *       "phone": "+91 98765-43210",
-     *       "status": "new"
-     *     }
-     */
-    LeadCreate: {
-      /**
-       * Email
-       * Format: email
-       * @description Email address. Stored lowercase and unique across all leads.
-       * @example jane@acme.com
-       */
-      email: string
-      /**
-       * Name
-       * @description Full name of the lead. Leading and trailing whitespace is trimmed.
-       * @example Jane Cooper
-       */
-      name: string
-      /**
-       * Phone
-       * @description Phone number. Spaces, dashes, dots and parentheses are removed; the result must be 7–15 digits, optionally prefixed with `+`. The normalized value is stored.
-       * @example +91 98765-43210
-       */
-      phone: string
-      /**
-       * @description Initial pipeline stage. Defaults to `new`.
-       * @default new
-       * @example new
-       */
-      status?: components['schemas']['LeadStatus']
-    }
-    /**
-     * LeadPage
-     * @description One page of leads, newest first, with the total count matching the filters.
-     * @example {
-     *       "items": [
-     *         {
-     *           "created_at": "2026-09-24T10:15:30.123456+00:00",
-     *           "email": "jane@acme.com",
-     *           "id": "3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21",
-     *           "name": "Jane Cooper",
-     *           "phone": "+919876543210",
-     *           "status": "new"
-     *         }
-     *       ],
-     *       "limit": 20,
-     *       "offset": 0,
-     *       "total": 57
-     *     }
-     */
-    LeadPage: {
-      /**
-       * Items
-       * @description Leads on this page, ordered by `created_at` descending.
-       */
-      items: components['schemas']['LeadRead'][]
-      /**
-       * Limit
-       * @description Page size that was applied.
-       * @example 20
-       */
-      limit: number
-      /**
-       * Offset
-       * @description Number of matching leads skipped.
-       * @example 0
-       */
-      offset: number
-      /**
-       * Total
-       * @description Number of leads matching the filters, ignoring pagination.
-       * @example 57
-       */
-      total: number
-    }
-    /**
-     * LeadRead
-     * @description A lead as returned by the API.
-     * @example {
-     *       "created_at": "2026-09-24T10:15:30.123456+00:00",
-     *       "email": "jane@acme.com",
-     *       "id": "3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21",
-     *       "name": "Jane Cooper",
-     *       "phone": "+919876543210",
-     *       "status": "new"
-     *     }
-     */
-    LeadRead: {
-      /**
-       * Created At
-       * Format: date-time
-       * @description When the lead was created (ISO 8601 with UTC offset).
-       * @example 2026-09-24T10:15:30.123456+00:00
-       */
-      created_at: string
-      /**
-       * Email
-       * @description Lowercase email address.
-       * @example jane@acme.com
-       */
-      email: string
-      /**
-       * Id
-       * Format: uuid
-       * @description Server-generated unique identifier.
-       * @example 3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21
-       */
-      id: string
-      /**
-       * Name
-       * @description Full name of the lead.
-       * @example Jane Cooper
-       */
-      name: string
-      /**
-       * Phone
-       * @description Normalized phone number (optional `+`, then 7–15 digits).
-       * @example +919876543210
-       */
-      phone: string
-      /**
-       * @description Current pipeline stage.
-       * @example new
-       */
-      status: components['schemas']['LeadStatus']
-    }
-    /**
-     * LeadStatus
-     * @description Pipeline stage of a lead.
-     * @enum {string}
-     */
-    LeadStatus: 'new' | 'contacted' | 'qualified' | 'lost'
-    /**
-     * LeadStatusUpdate
-     * @description Request body for changing a lead's status. Unknown fields are rejected.
-     * @example {
-     *       "status": "qualified"
-     *     }
-     */
-    LeadStatusUpdate: {
-      /**
-       * @description The new pipeline stage.
-       * @example qualified
-       */
-      status: components['schemas']['LeadStatus']
-    }
-  }
-  responses: never
-  parameters: never
-  requestBodies: never
-  headers: never
-  pathItems: never
+    schemas: {
+        /**
+         * ErrorBody
+         * @description Error payload.
+         */
+        ErrorBody: {
+            /**
+             * @description Machine-readable error code.
+             * @example LEAD_NOT_FOUND
+             */
+            code: components["schemas"]["ErrorCode"];
+            /**
+             * Details
+             * @description Per-field problems for validation and conflict errors; otherwise `null`.
+             */
+            details?: components["schemas"]["ErrorDetail"][] | null;
+            /**
+             * Message
+             * @description Human-readable summary of the error.
+             * @example Lead '3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21' was not found.
+             */
+            message: string;
+        };
+        /**
+         * ErrorCode
+         * @description Machine-readable error code. Clients should branch on this, not on `message`.
+         * @enum {string}
+         */
+        ErrorCode: "VALIDATION_ERROR" | "LEAD_NOT_FOUND" | "LEAD_EMAIL_CONFLICT" | "ROUTE_NOT_FOUND" | "METHOD_NOT_ALLOWED" | "SERVICE_UNAVAILABLE" | "INTERNAL_ERROR";
+        /**
+         * ErrorDetail
+         * @description A problem with one input field.
+         */
+        ErrorDetail: {
+            /**
+             * Field
+             * @description Dotted location of the invalid input, e.g. `body.email` or `query.limit`.
+             * @example body.email
+             */
+            field: string;
+            /**
+             * Message
+             * @description Human-readable explanation.
+             * @example value is not a valid email address: An email address must have an @-sign.
+             */
+            message: string;
+            /**
+             * Type
+             * @description Error type, e.g. `missing`, `value_error`, `conflict`.
+             * @example value_error
+             */
+            type: string;
+        };
+        /**
+         * ErrorResponse
+         * @description Envelope used by every non-2xx response.
+         * @example {
+         *       "error": {
+         *         "code": "LEAD_NOT_FOUND",
+         *         "message": "Lead '3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21' was not found."
+         *       }
+         *     }
+         */
+        ErrorResponse: {
+            /** @description The error that occurred. */
+            error: components["schemas"]["ErrorBody"];
+        };
+        /**
+         * HealthResponse
+         * @description Service health, including database connectivity.
+         * @example {
+         *       "database": "ok",
+         *       "status": "ok"
+         *     }
+         */
+        HealthResponse: {
+            /**
+             * Database
+             * @description Database connectivity status.
+             * @example ok
+             * @constant
+             */
+            database: "ok";
+            /**
+             * Status
+             * @description Overall API status.
+             * @example ok
+             * @constant
+             */
+            status: "ok";
+        };
+        /**
+         * LeadCreate
+         * @description Request body for creating a lead. Unknown fields are rejected.
+         * @example {
+         *       "email": "Jane@Acme.com",
+         *       "name": "Jane Cooper",
+         *       "phone": "+91 98765-43210",
+         *       "status": "new"
+         *     }
+         */
+        LeadCreate: {
+            /**
+             * Email
+             * Format: email
+             * @description Email address. Stored lowercase and unique across all leads.
+             * @example jane@acme.com
+             */
+            email: string;
+            /**
+             * Name
+             * @description Full name of the lead. Leading and trailing whitespace is trimmed.
+             * @example Jane Cooper
+             */
+            name: string;
+            /**
+             * Phone
+             * @description Phone number. Spaces, dashes, dots and parentheses are removed; the result must be 7–15 digits, optionally prefixed with `+`. The normalized value is stored.
+             * @example +91 98765-43210
+             */
+            phone: string;
+            /**
+             * @description Initial pipeline stage. Defaults to `new`.
+             * @default new
+             * @example new
+             */
+            status?: components["schemas"]["LeadStatus"];
+        };
+        /**
+         * LeadPage
+         * @description One page of leads, newest first, with the total count matching the filters.
+         * @example {
+         *       "items": [
+         *         {
+         *           "created_at": "2026-09-24T10:15:30.123456+00:00",
+         *           "email": "jane@acme.com",
+         *           "id": "3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21",
+         *           "name": "Jane Cooper",
+         *           "phone": "+919876543210",
+         *           "status": "new"
+         *         }
+         *       ],
+         *       "limit": 20,
+         *       "offset": 0,
+         *       "total": 57
+         *     }
+         */
+        LeadPage: {
+            /**
+             * Items
+             * @description Leads on this page, ordered by `created_at` descending.
+             */
+            items: components["schemas"]["LeadRead"][];
+            /**
+             * Limit
+             * @description Page size that was applied.
+             * @example 20
+             */
+            limit: number;
+            /**
+             * Offset
+             * @description Number of matching leads skipped.
+             * @example 0
+             */
+            offset: number;
+            /**
+             * Total
+             * @description Number of leads matching the filters, ignoring pagination.
+             * @example 57
+             */
+            total: number;
+        };
+        /**
+         * LeadRead
+         * @description A lead as returned by the API.
+         * @example {
+         *       "created_at": "2026-09-24T10:15:30.123456+00:00",
+         *       "email": "jane@acme.com",
+         *       "id": "3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21",
+         *       "name": "Jane Cooper",
+         *       "phone": "+919876543210",
+         *       "status": "new"
+         *     }
+         */
+        LeadRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the lead was created (ISO 8601 with UTC offset).
+             * @example 2026-09-24T10:15:30.123456+00:00
+             */
+            created_at: string;
+            /**
+             * Email
+             * @description Lowercase email address.
+             * @example jane@acme.com
+             */
+            email: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description Server-generated unique identifier.
+             * @example 3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21
+             */
+            id: string;
+            /**
+             * Name
+             * @description Full name of the lead.
+             * @example Jane Cooper
+             */
+            name: string;
+            /**
+             * Phone
+             * @description Normalized phone number (optional `+`, then 7–15 digits).
+             * @example +919876543210
+             */
+            phone: string;
+            /**
+             * @description Current pipeline stage.
+             * @example new
+             */
+            status: components["schemas"]["LeadStatus"];
+        };
+        /**
+         * LeadStatus
+         * @description Pipeline stage of a lead.
+         * @enum {string}
+         */
+        LeadStatus: "new" | "contacted" | "qualified" | "lost";
+        /**
+         * LeadStatusUpdate
+         * @description Request body for changing a lead's status. Unknown fields are rejected.
+         * @example {
+         *       "status": "qualified"
+         *     }
+         */
+        LeadStatusUpdate: {
+            /**
+             * @description The new pipeline stage.
+             * @example qualified
+             */
+            status: components["schemas"]["LeadStatus"];
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
-export type $defs = Record<string, never>
+export type $defs = Record<string, never>;
 export interface operations {
-  health_check: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description The API and its database are reachable. */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HealthResponse']
-        }
-      }
-      /** @description The database is unreachable. */
-      503: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ErrorResponse']
-        }
-      }
-    }
-  }
-  list_leads: {
-    parameters: {
-      query?: {
-        /** @description Case-insensitive substring to match against name, email or phone. Trimmed; empty means no filter. */
-        q?: string | null
-        /** @description Only return leads in this stage. */
-        status?: components['schemas']['LeadStatus'] | null
-        /** @description Page size (1–100). */
-        limit?: number
-        /** @description Number of matching leads to skip. */
-        offset?: number
-      }
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description A page of leads and the total number matching the filters. */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['LeadPage']
-        }
-      }
-      /** @description The request failed validation. `details` lists every invalid field. */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ErrorResponse']
-        }
-      }
-      /** @description Unexpected server error. The cause is logged server-side and never returned. */
-      500: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ErrorResponse']
-        }
-      }
-    }
-  }
-  create_lead: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['LeadCreate']
-      }
-    }
-    responses: {
-      /** @description The created lead. */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['LeadRead']
-        }
-      }
-      /** @description A lead with this email already exists (comparison is case-insensitive). */
-      409: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ErrorResponse']
-        }
-      }
-      /** @description The request failed validation. `details` lists every invalid field. */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ErrorResponse']
-        }
-      }
-      /** @description Unexpected server error. The cause is logged server-side and never returned. */
-      500: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ErrorResponse']
-        }
-      }
-    }
-  }
-  update_lead_status: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        /** @description Id of the lead to update. */
-        lead_id: string
-      }
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['LeadStatusUpdate']
-      }
-    }
-    responses: {
-      /** @description The lead with its updated status. */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['LeadRead']
-        }
-      }
-      /** @description The lead does not exist. */
-      404: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ErrorResponse']
-        }
-      }
-      /** @description The request failed validation. `details` lists every invalid field. */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ErrorResponse']
-        }
-      }
-      /** @description Unexpected server error. The cause is logged server-side and never returned. */
-      500: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['ErrorResponse']
-        }
-      }
-    }
-  }
+    health_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The API and its database are reachable. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+            /** @description The database is unreachable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_leads: {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive substring to match against name, email or phone. Trimmed; empty means no filter. */
+                q?: string | null;
+                /** @description Only return leads in this stage. */
+                status?: components["schemas"]["LeadStatus"] | null;
+                /** @description Page size (1–100). */
+                limit?: number;
+                /** @description Number of matching leads to skip (0–1,000,000). */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of leads and the total number matching the filters. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadPage"];
+                };
+            };
+            /** @description The request failed validation. `details` lists every invalid field. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unexpected server error. The cause is logged server-side and never returned. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_lead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadCreate"];
+            };
+        };
+        responses: {
+            /** @description The created lead. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadRead"];
+                };
+            };
+            /** @description A lead with this email already exists (comparison is case-insensitive). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request failed validation. `details` lists every invalid field. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unexpected server error. The cause is logged server-side and never returned. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_lead_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Id of the lead to update. */
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadStatusUpdate"];
+            };
+        };
+        responses: {
+            /** @description The lead with its updated status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadRead"];
+                };
+            };
+            /** @description The lead does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The request failed validation. `details` lists every invalid field. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unexpected server error. The cause is logged server-side and never returned. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
 }

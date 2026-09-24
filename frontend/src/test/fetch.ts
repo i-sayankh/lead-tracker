@@ -32,3 +32,17 @@ export function mockFetch(handler: (url: URL, init: RequestInit) => Response | P
   vi.stubGlobal('fetch', fn)
   return fn
 }
+
+export function errorBody(
+  code: string,
+  message: string,
+  details: { field: string; message: string; type: string }[] | null = null,
+) {
+  return { error: { code, message, details } }
+}
+
+export const emailConflict = errorBody(
+  'LEAD_EMAIL_CONFLICT',
+  "A lead with email 'priya@finlytics.in' already exists.",
+  [{ field: 'body.email', message: 'Email already exists', type: 'conflict' }],
+)

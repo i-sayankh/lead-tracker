@@ -1,7 +1,11 @@
 import { useCallback, useState } from 'react'
 import { LEAD_STATUSES, type LeadStatus } from '../api/client'
+import { PAGE_SIZE } from './useLeads'
 
-export interface ListState {
+// The API caps offset at 1,000,000 (backend MAX_OFFSET); later pages would only return 422.
+const MAX_PAGE = Math.floor(1_000_000 / PAGE_SIZE) + 1
+
+interface ListState {
   q: string
   status: LeadStatus | null
   page: number
@@ -18,7 +22,7 @@ function readUrl(): ListState {
   return {
     q: params.get('q') ?? '',
     status: isLeadStatus(status) ? status : null,
-    page: Number.isInteger(page) && page > 0 ? page : 1,
+    page: Number.isInteger(page) && page > 0 && page <= MAX_PAGE ? page : 1,
   }
 }
 
