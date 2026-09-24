@@ -1,0 +1,22 @@
+# Render Blueprint for the Lead Tracker API. Postgres is hosted on Neon (Render's free
+# Postgres is deleted after 30 days), so DATABASE_URL is set in the dashboard.
+services:
+  - type: web
+    name: lead-tracker-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    # --no-dev keeps `uv run` from installing the dev tools on every boot.
+    startCommand: uv run --no-dev alembic upgrade head && uv run --no-dev uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.13
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
