@@ -25,7 +25,7 @@ export function Toasts({ toasts, onDismiss }: Props) {
             type="button"
             onClick={() => onDismiss(toast.id)}
             aria-label="Dismiss notification"
-            className="flex size-8 items-center justify-center rounded-sm text-ink-subtle hover:bg-surface-1 hover:text-ink"
+            className="flex size-10 items-center justify-center rounded-sm text-ink-subtle hover:bg-surface-1 hover:text-ink"
           >
             <svg
               aria-hidden="true"

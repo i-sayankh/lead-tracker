@@ -586,7 +586,7 @@ All pairs meet 4.5:1 contrast.
 
 ### Components
 
-- **Table**: rows separated by 1px hairline, no zebra, no card per row on desktop. Header row in `caption` weight 500, `ink-subtle`. Rows are 48px tall.
+- **Table**: rows separated by 1px hairline, no zebra, no card per row on desktop. Header row in `caption` weight 500, `ink-subtle`. Rows fit the 40px status control (every interactive control is at least 40px tall).
 - **Segmented control** (status filter): Linear's pricing-tab pattern (selected = surface-2 lift) built on native radio inputs.
 - **Dialog**: native `<dialog>`, surface-1, `rounded.lg` 12px, 1px hairline, overlay scrim at 50% black.
 - **Buttons**: `button-primary` / `button-secondary` from the source, min height 40px.

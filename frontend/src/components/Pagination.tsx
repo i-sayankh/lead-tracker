@@ -12,7 +12,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: Props) {
   const last = Math.min(page * pageSize, total)
   return (
     <nav aria-label="Pagination" className="flex items-center justify-between gap-4">
-      <p className="text-body-sm text-ink-subtle" aria-live="polite">
+      <p className="text-body-sm text-ink-subtle tabular-nums" aria-live="polite">
         Showing <span className="text-ink">{first}</span>–<span className="text-ink">{last}</span>{' '}
         of <span className="text-ink">{total}</span>
       </p>

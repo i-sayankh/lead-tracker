@@ -45,6 +45,7 @@ export function Toolbar({ q, status, onSearchChange, onStatusChange }: Props) {
         <input
           ref={searchRef}
           id="lead-search"
+          name="q"
           type="search"
           value={q}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -57,7 +58,7 @@ export function Toolbar({ q, status, onSearchChange, onStatusChange }: Props) {
           maxLength={100}
           className="h-10 w-full rounded-md border border-hairline bg-surface-1 pr-20 pl-3 text-body-sm text-ink placeholder:text-ink-subtle focus-visible:border-primary [&::-webkit-search-cancel-button]:hidden"
         />
-        <div className="absolute inset-y-0 right-1 flex items-center gap-1">
+        <div className="absolute inset-y-0 right-0 flex items-center">
           {q ? (
             <button
               type="button"
@@ -65,14 +66,14 @@ export function Toolbar({ q, status, onSearchChange, onStatusChange }: Props) {
                 onSearchChange('')
                 searchRef.current?.focus()
               }}
-              className="flex h-8 items-center rounded-sm px-2 text-caption font-medium text-ink-subtle hover:bg-surface-2 hover:text-ink"
+              className="flex h-10 min-w-10 items-center justify-center rounded-md px-3 text-caption font-medium text-ink-subtle hover:bg-surface-2 hover:text-ink"
             >
               Clear
             </button>
           ) : (
             <kbd
               aria-hidden="true"
-              className="mr-1.5 rounded-xs border border-hairline bg-canvas px-1.5 font-mono text-caption text-ink-subtle"
+              className="mr-2.5 rounded-xs border border-hairline bg-canvas px-1.5 font-mono text-caption text-ink-subtle"
             >
               /
             </kbd>
@@ -80,7 +81,7 @@ export function Toolbar({ q, status, onSearchChange, onStatusChange }: Props) {
         </div>
       </div>
 
-      <fieldset className="flex min-w-0 flex-wrap gap-1 rounded-md border border-hairline bg-surface-1 p-1">
+      <fieldset className="flex min-w-0 flex-wrap gap-0.5 rounded-md border border-hairline bg-surface-1 p-0.5">
         <legend className="sr-only">Filter by status</legend>
         {FILTERS.map(({ value, label }) => (
           <label key={label} className="relative">
@@ -92,7 +93,7 @@ export function Toolbar({ q, status, onSearchChange, onStatusChange }: Props) {
               onChange={() => onStatusChange(value)}
               className="peer sr-only"
             />
-            <span className="flex h-8 cursor-pointer items-center rounded-sm px-3 text-body-sm font-medium text-ink-subtle transition-colors duration-150 select-none peer-checked:bg-canvas peer-checked:text-ink peer-checked:shadow-[0_0_0_1px_var(--hairline)] peer-focus-visible:outline-2 peer-focus-visible:outline-primary hover:text-ink">
+            <span className="flex h-10 cursor-pointer items-center rounded-sm px-3 text-body-sm font-medium text-ink-subtle transition-colors duration-150 select-none peer-checked:bg-canvas peer-checked:text-ink peer-checked:shadow-[0_0_0_1px_var(--hairline)] peer-focus-visible:outline-2 peer-focus-visible:outline-primary hover:text-ink">
               {label}
             </span>
           </label>

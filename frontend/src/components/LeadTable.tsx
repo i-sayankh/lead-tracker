@@ -44,12 +44,13 @@ export function LeadTable({ leads, renderStatus }: Props) {
             key={lead.id}
             className="border-b border-hairline max-sm:block max-sm:rounded-lg max-sm:border max-sm:bg-surface-1 max-sm:p-4"
           >
-            <td data-label="Name" className={`${cell} font-medium text-ink`}>
+            <td data-label="Name" className={`${cell} font-medium break-words text-ink`}>
               {lead.name}
             </td>
             <td data-label="Email" className={cell}>
               <a
                 href={`mailto:${lead.email}`}
+                translate="no"
                 className="break-all text-ink-muted hover:text-primary hover:underline"
               >
                 {lead.email}
@@ -58,6 +59,7 @@ export function LeadTable({ leads, renderStatus }: Props) {
             <td data-label="Phone" className={cell}>
               <a
                 href={`tel:${lead.phone}`}
+                translate="no"
                 className="font-mono text-caption text-ink-muted hover:text-primary hover:underline"
               >
                 {lead.phone}

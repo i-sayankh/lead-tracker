@@ -45,10 +45,10 @@ export function StatusSelect({ lead, onUpdated, onError }: Props) {
           const next = LEAD_STATUSES.find((s) => s === e.target.value)
           if (next) void change(next)
         }}
-        className="h-8 cursor-pointer appearance-none rounded-full border border-transparent bg-transparent pr-7 pl-3 text-caption font-medium text-inherit transition-opacity duration-150 hover:border-hairline-strong disabled:cursor-progress disabled:opacity-70"
+        className="h-10 cursor-pointer appearance-none rounded-full border border-transparent bg-transparent pr-7 pl-3 text-caption font-medium text-inherit transition-opacity duration-150 hover:border-hairline-strong disabled:cursor-progress disabled:opacity-70"
       >
         {LEAD_STATUSES.map((s) => (
-          <option key={s} value={s}>
+          <option key={s} value={s} className="bg-canvas text-ink">
             {STATUS_LABEL[s]}
           </option>
         ))}

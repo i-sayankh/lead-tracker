@@ -120,10 +120,10 @@ export function LeadForm({ open, onClose, onCreated }: Props) {
         reset()
         onClose()
       }}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-hairline bg-canvas p-0 text-ink"
+      className="m-auto w-[calc(100%-2rem)] overscroll-contain max-w-md rounded-lg border border-hairline bg-canvas p-0 text-ink"
     >
       <form ref={formRef} noValidate onSubmit={handleSubmit} className="flex flex-col gap-5 p-6">
-        <h2 id={`${id}-title`} className="text-card-title font-medium">
+        <h2 id={`${id}-title`} className="text-card-title font-medium text-balance">
           New lead
         </h2>
 
@@ -138,6 +138,7 @@ export function LeadForm({ open, onClose, onCreated }: Props) {
                 id={`${id}-${field.name}`}
                 name={field.name}
                 type={field.type}
+                spellCheck={field.name === 'name' ? undefined : false}
                 autoComplete={field.autoComplete}
                 placeholder={field.placeholder}
                 value={values[field.name]}

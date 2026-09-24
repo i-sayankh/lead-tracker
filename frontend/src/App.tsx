@@ -70,7 +70,7 @@ export default function App() {
     const noun = view.status ? `${STATUS_LABEL[view.status].toLowerCase()} leads` : 'leads'
     content = (
       <EmptyState
-        title={term ? `No ${noun} match '${term}'` : `No ${noun} yet`}
+        title={term ? `No ${noun} match “${term}”` : `No ${noun} yet`}
         action={
           <button type="button" className={secondaryButton} onClick={clearFilters}>
             Clear filters
@@ -105,11 +105,17 @@ export default function App() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <a
+        href="#leads"
+        className="sr-only rounded-md bg-primary px-3 py-2 text-body-sm text-on-primary focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50"
+      >
+        Skip to leads
+      </a>
       <header className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-headline font-semibold">Leads</h1>
+          <h1 className="text-headline font-semibold text-balance">Leads</h1>
           {data && (
-            <p className="text-body-sm text-ink-subtle">
+            <p className="text-body-sm text-ink-subtle tabular-nums">
               {data.total} {data.total === 1 ? 'lead' : 'leads'}
               {hasFilters ? ' matching' : ''}
             </p>
@@ -144,7 +150,9 @@ export default function App() {
         </p>
       )}
 
-      <main>{content}</main>
+      <main id="leads" tabIndex={-1} className="focus:outline-none">
+        {content}
+      </main>
 
       <LeadForm
         open={createOpen}

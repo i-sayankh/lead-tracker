@@ -20,7 +20,7 @@ describe('App', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    expect(await screen.findByText("No leads match 'zzz'")).toBeInTheDocument()
+    expect(await screen.findByText('No leads match “zzz”')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Clear filters' }))
 
     expect(await screen.findByRole('cell', { name: 'Priya Sharma' })).toBeInTheDocument()
