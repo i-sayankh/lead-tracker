@@ -7,7 +7,7 @@ from fastapi.routing import APIRoute
 
 from app.config import get_settings
 from app.errors import register_error_handlers
-from app.routers import health
+from app.routers import health, leads
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -21,6 +21,7 @@ def create_app() -> FastAPI:
         version="1.0.0",
         summary="Create, list, search and update the status of sales leads.",
         openapi_tags=[
+            {"name": "leads", "description": "Create, list, search and update leads."},
             {"name": "health", "description": "Liveness and database connectivity."},
         ],
         docs_url="/docs",
@@ -35,6 +36,7 @@ def create_app() -> FastAPI:
         allow_credentials=False,
     )
     register_error_handlers(app)
+    app.include_router(leads.router, prefix=API_PREFIX)
     app.include_router(health.router, prefix=API_PREFIX)
 
     @app.get("/", include_in_schema=False)
