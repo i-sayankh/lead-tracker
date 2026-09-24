@@ -1,13 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app import services
 from app.db import get_db
 from app.errors import ErrorCode, error_example, error_responses
 from app.models import Lead
-from app.schemas import PHONE_RULE, LeadCreate, LeadRead
+from app.schemas import PHONE_RULE, LeadCreate, LeadPage, LeadRead, LeadStatus
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -72,3 +72,86 @@ FAILED = "Request validation failed."
 )
 def create_lead(body: LeadCreate, db: DbSession) -> Lead:
     return services.create_lead(db, body)
+
+
+@router.get(
+    "",
+    response_model=LeadPage,
+    summary="List and search leads",
+    description=(
+        "Returns one page of leads ordered newest first (`created_at` descending, then `id`).\n\n"
+        "- `q` does a case-insensitive substring match on name, email **or** phone. "
+        "`%` and `_` are matched literally. An empty or whitespace-only `q` means no filter.\n"
+        "- `status` keeps only leads in that stage. It combines with `q`.\n"
+        "- `total` is the number of leads matching the filters, ignoring `limit`/`offset`.\n\n"
+        "**Errors**\n\n"
+        "- `422 VALIDATION_ERROR`: a query parameter is out of bounds or not an allowed value.\n"
+        "- `500 INTERNAL_ERROR`: unexpected server error."
+    ),
+    response_description="A page of leads and the total number matching the filters.",
+    responses=error_responses(
+        422,
+        500,
+        examples={
+            422: {
+                "limit_too_small": error_example(
+                    "limit=0",
+                    VALIDATION,
+                    FAILED,
+                    [
+                        (
+                            "query.limit",
+                            "Input should be greater than or equal to 1",
+                            "greater_than_equal",
+                        )
+                    ],
+                ),
+                "unknown_status": error_example(
+                    "status=unknown",
+                    VALIDATION,
+                    FAILED,
+                    [
+                        (
+                            "query.status",
+                            "Input should be 'new', 'contacted', 'qualified' or 'lost'",
+                            "enum",
+                        )
+                    ],
+                ),
+            }
+        },
+    ),
+)
+def list_leads(
+    db: DbSession,
+    q: Annotated[
+        str | None,
+        Query(
+            max_length=100,
+            description=(
+                "Case-insensitive substring to match against name, email or phone. "
+                "Trimmed; empty means no filter."
+            ),
+            examples=["jane"],
+        ),
+    ] = None,
+    status: Annotated[
+        LeadStatus | None,
+        Query(description="Only return leads in this stage.", examples=["contacted"]),
+    ] = None,
+    limit: Annotated[
+        int, Query(ge=1, le=100, description="Page size (1–100).", examples=[20])
+    ] = 20,
+    offset: Annotated[
+        int, Query(ge=0, description="Number of matching leads to skip.", examples=[0])
+    ] = 0,
+) -> LeadPage:
+    items, total = services.list_leads(
+        db, q=(q or "").strip() or None, status=status, limit=limit, offset=offset
+    )
+    return LeadPage(
+        items=[LeadRead.model_validate(lead) for lead in items],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )

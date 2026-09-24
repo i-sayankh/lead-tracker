@@ -1,9 +1,10 @@
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.errors import LeadEmailConflictError
 from app.models import Lead
-from app.schemas import LeadCreate
+from app.schemas import LeadCreate, LeadStatus
 
 EMAIL_UNIQUE_CONSTRAINT = "uq_leads_email"
 
@@ -22,3 +23,36 @@ def create_lead(db: Session, data: LeadCreate) -> Lead:
         raise
     db.refresh(lead)
     return lead
+
+
+def _escape_like(value: str) -> str:
+    """Escape LIKE wildcards so user input matches literally (used with escape="\\")."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def list_leads(
+    db: Session, *, q: str | None, status: LeadStatus | None, limit: int, offset: int
+) -> tuple[list[Lead], int]:
+    """Return one page of leads (newest first) and the total count matching the filters."""
+    filters = []
+    if q:
+        pattern = f"%{_escape_like(q)}%"
+        filters.append(
+            or_(
+                Lead.name.ilike(pattern, escape="\\"),
+                Lead.email.ilike(pattern, escape="\\"),
+                Lead.phone.ilike(pattern, escape="\\"),
+            )
+        )
+    if status is not None:
+        filters.append(Lead.status == status)
+
+    total = db.scalar(select(func.count()).select_from(Lead).where(*filters)) or 0
+    items = db.scalars(
+        select(Lead)
+        .where(*filters)
+        .order_by(Lead.created_at.desc(), Lead.id.desc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return list(items), total
