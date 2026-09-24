@@ -1,11 +1,14 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { EmptyState } from './components/EmptyState'
+import { LeadForm } from './components/LeadForm'
 import { LeadTable, LeadTableSkeleton } from './components/LeadTable'
 import { Pagination } from './components/Pagination'
+import { Toasts } from './components/Toasts'
 import { Toolbar } from './components/Toolbar'
 import { primaryButton, secondaryButton } from './components/buttons'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
 import { PAGE_SIZE, useLeads } from './hooks/useLeads'
+import { useToasts } from './hooks/useToasts'
 import { useUrlState } from './hooks/useUrlState'
 import { STATUS_LABEL } from './lib/status'
 
@@ -13,6 +16,8 @@ export const SEARCH_DEBOUNCE_MS = 300
 
 export default function App() {
   const [view, setView] = useUrlState()
+  const [createOpen, setCreateOpen] = useState(false)
+  const { toasts, push: toast, dismiss } = useToasts()
   const debouncedQ = useDebouncedValue(view.q, SEARCH_DEBOUNCE_MS)
   const { data, error, loading, slow, reload } = useLeads({
     q: debouncedQ,
@@ -29,9 +34,7 @@ export default function App() {
 
   const hasFilters = Boolean(debouncedQ.trim() || view.status)
   const clearFilters = () => setView({ q: '', status: null, page: 1 })
-  const openCreate = () => {
-    // Wired to the create dialog in the next step.
-  }
+  const openCreate = () => setCreateOpen(true)
 
   let content
   if (error && !data) {
@@ -102,6 +105,9 @@ export default function App() {
             </p>
           )}
         </div>
+        <button type="button" className={primaryButton} onClick={openCreate}>
+          New lead
+        </button>
       </header>
 
       <Toolbar
@@ -112,7 +118,10 @@ export default function App() {
       />
 
       {slow && (
-        <p role="status" className="rounded-md border border-hairline bg-surface-1 px-4 py-3 text-body-sm text-ink-muted">
+        <p
+          role="status"
+          className="rounded-md border border-hairline bg-surface-1 px-4 py-3 text-body-sm text-ink-muted"
+        >
           Waking up the server — the free tier sleeps when idle (up to ~50s)…
         </p>
       )}
@@ -126,6 +135,19 @@ export default function App() {
       )}
 
       <main>{content}</main>
+
+      <LeadForm
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => {
+          setCreateOpen(false)
+          toast('Lead created')
+          // Newest first, so the new lead is at the top of page 1 of the unfiltered list.
+          setView({ page: 1 })
+          reload()
+        }}
+      />
+      <Toasts toasts={toasts} onDismiss={dismiss} />
     </div>
   )
 }

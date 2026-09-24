@@ -7,7 +7,6 @@ interface Props {
   onPageChange: (page: number) => void
 }
 
-
 export function Pagination({ page, pageSize, total, onPageChange }: Props) {
   const first = (page - 1) * pageSize + 1
   const last = Math.min(page * pageSize, total)
