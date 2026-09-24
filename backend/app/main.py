@@ -6,6 +6,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
 
 from app.config import get_settings
+from app.errors import register_error_handlers
 from app.routers import health
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -33,6 +34,7 @@ def create_app() -> FastAPI:
         allow_headers=["Content-Type"],
         allow_credentials=False,
     )
+    register_error_handlers(app)
     app.include_router(health.router, prefix=API_PREFIX)
 
     @app.get("/", include_in_schema=False)
