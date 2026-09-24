@@ -1,6 +1,16 @@
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class LeadStatus(StrEnum):
+    """Pipeline stage of a lead."""
+
+    NEW = "new"
+    CONTACTED = "contacted"
+    QUALIFIED = "qualified"
+    LOST = "lost"
 
 
 class HealthResponse(BaseModel):
