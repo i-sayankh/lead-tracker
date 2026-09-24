@@ -133,18 +133,32 @@ def list_leads(
                 "Case-insensitive substring to match against name, email or phone. "
                 "Trimmed; empty means no filter."
             ),
-            examples=["jane"],
+            openapi_examples={"name": {"summary": "Match a name", "value": "jane"}},
         ),
     ] = None,
     status: Annotated[
         LeadStatus | None,
-        Query(description="Only return leads in this stage.", examples=["contacted"]),
+        Query(
+            description="Only return leads in this stage.",
+            openapi_examples={"contacted": {"summary": "Contacted", "value": "contacted"}},
+        ),
     ] = None,
     limit: Annotated[
-        int, Query(ge=1, le=100, description="Page size (1–100).", examples=[20])
+        int,
+        Query(
+            ge=1,
+            le=100,
+            description="Page size (1–100).",
+            openapi_examples={"default": {"summary": "Default", "value": 20}},
+        ),
     ] = 20,
     offset: Annotated[
-        int, Query(ge=0, description="Number of matching leads to skip.", examples=[0])
+        int,
+        Query(
+            ge=0,
+            description="Number of matching leads to skip.",
+            openapi_examples={"first_page": {"summary": "First page", "value": 0}},
+        ),
     ] = 0,
 ) -> LeadPage:
     items, total = services.list_leads(
@@ -215,7 +229,9 @@ def update_lead_status(
         uuid.UUID,
         Path(
             description="Id of the lead to update.",
-            examples=["3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21"],
+            openapi_examples={
+                "lead_id": {"summary": "A lead id", "value": "3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21"}
+            },
         ),
     ],
     body: LeadStatusUpdate,

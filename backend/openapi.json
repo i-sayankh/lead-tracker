@@ -1,0 +1,933 @@
+{
+  "components": {
+    "schemas": {
+      "ErrorBody": {
+        "description": "Error payload.",
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode",
+            "description": "Machine-readable error code.",
+            "examples": [
+              "LEAD_NOT_FOUND"
+            ]
+          },
+          "details": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ErrorDetail"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Per-field problems for validation and conflict errors; otherwise `null`.",
+            "title": "Details"
+          },
+          "message": {
+            "description": "Human-readable summary of the error.",
+            "examples": [
+              "Lead '3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21' was not found."
+            ],
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
+      "ErrorCode": {
+        "description": "Machine-readable error code. Clients should branch on this, not on `message`.",
+        "enum": [
+          "VALIDATION_ERROR",
+          "LEAD_NOT_FOUND",
+          "LEAD_EMAIL_CONFLICT",
+          "ROUTE_NOT_FOUND",
+          "METHOD_NOT_ALLOWED",
+          "SERVICE_UNAVAILABLE",
+          "INTERNAL_ERROR"
+        ],
+        "title": "ErrorCode",
+        "type": "string"
+      },
+      "ErrorDetail": {
+        "description": "A problem with one input field.",
+        "properties": {
+          "field": {
+            "description": "Dotted location of the invalid input, e.g. `body.email` or `query.limit`.",
+            "examples": [
+              "body.email"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "message": {
+            "description": "Human-readable explanation.",
+            "examples": [
+              "value is not a valid email address: An email address must have an @-sign."
+            ],
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "description": "Error type, e.g. `missing`, `value_error`, `conflict`.",
+            "examples": [
+              "value_error"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "message",
+          "type"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "description": "Envelope used by every non-2xx response.",
+        "examples": [
+          {
+            "error": {
+              "code": "LEAD_NOT_FOUND",
+              "message": "Lead '3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21' was not found."
+            }
+          }
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody",
+            "description": "The error that occurred."
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "description": "Service health, including database connectivity.",
+        "examples": [
+          {
+            "database": "ok",
+            "status": "ok"
+          }
+        ],
+        "properties": {
+          "database": {
+            "const": "ok",
+            "description": "Database connectivity status.",
+            "examples": [
+              "ok"
+            ],
+            "title": "Database",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "description": "Overall API status.",
+            "examples": [
+              "ok"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "database"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "LeadCreate": {
+        "additionalProperties": false,
+        "description": "Request body for creating a lead. Unknown fields are rejected.",
+        "examples": [
+          {
+            "email": "Jane@Acme.com",
+            "name": "Jane Cooper",
+            "phone": "+91 98765-43210",
+            "status": "new"
+          }
+        ],
+        "properties": {
+          "email": {
+            "description": "Email address. Stored lowercase and unique across all leads.",
+            "examples": [
+              "jane@acme.com"
+            ],
+            "format": "email",
+            "maxLength": 254,
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "description": "Full name of the lead. Leading and trailing whitespace is trimmed.",
+            "examples": [
+              "Jane Cooper"
+            ],
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Phone number. Spaces, dashes, dots and parentheses are removed; the result must be 7–15 digits, optionally prefixed with `+`. The normalized value is stored.",
+            "examples": [
+              "+91 98765-43210"
+            ],
+            "title": "Phone",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LeadStatus",
+            "default": "new",
+            "description": "Initial pipeline stage. Defaults to `new`.",
+            "examples": [
+              "new"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "phone"
+        ],
+        "title": "LeadCreate",
+        "type": "object"
+      },
+      "LeadPage": {
+        "description": "One page of leads, newest first, with the total count matching the filters.",
+        "examples": [
+          {
+            "items": [
+              {
+                "created_at": "2026-09-24T10:15:30.123456+00:00",
+                "email": "jane@acme.com",
+                "id": "3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21",
+                "name": "Jane Cooper",
+                "phone": "+919876543210",
+                "status": "new"
+              }
+            ],
+            "limit": 20,
+            "offset": 0,
+            "total": 57
+          }
+        ],
+        "properties": {
+          "items": {
+            "description": "Leads on this page, ordered by `created_at` descending.",
+            "items": {
+              "$ref": "#/components/schemas/LeadRead"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "description": "Page size that was applied.",
+            "examples": [
+              20
+            ],
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Number of matching leads skipped.",
+            "examples": [
+              0
+            ],
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Number of leads matching the filters, ignoring pagination.",
+            "examples": [
+              57
+            ],
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "LeadPage",
+        "type": "object"
+      },
+      "LeadRead": {
+        "description": "A lead as returned by the API.",
+        "examples": [
+          {
+            "created_at": "2026-09-24T10:15:30.123456+00:00",
+            "email": "jane@acme.com",
+            "id": "3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21",
+            "name": "Jane Cooper",
+            "phone": "+919876543210",
+            "status": "new"
+          }
+        ],
+        "properties": {
+          "created_at": {
+            "description": "When the lead was created (ISO 8601 with UTC offset).",
+            "examples": [
+              "2026-09-24T10:15:30.123456+00:00"
+            ],
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "description": "Lowercase email address.",
+            "examples": [
+              "jane@acme.com"
+            ],
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "description": "Server-generated unique identifier.",
+            "examples": [
+              "3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21"
+            ],
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "Full name of the lead.",
+            "examples": [
+              "Jane Cooper"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Normalized phone number (optional `+`, then 7–15 digits).",
+            "examples": [
+              "+919876543210"
+            ],
+            "title": "Phone",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LeadStatus",
+            "description": "Current pipeline stage.",
+            "examples": [
+              "new"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "phone",
+          "status",
+          "created_at"
+        ],
+        "title": "LeadRead",
+        "type": "object"
+      },
+      "LeadStatus": {
+        "description": "Pipeline stage of a lead.",
+        "enum": [
+          "new",
+          "contacted",
+          "qualified",
+          "lost"
+        ],
+        "title": "LeadStatus",
+        "type": "string"
+      },
+      "LeadStatusUpdate": {
+        "additionalProperties": false,
+        "description": "Request body for changing a lead's status. Unknown fields are rejected.",
+        "examples": [
+          {
+            "status": "qualified"
+          }
+        ],
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/LeadStatus",
+            "description": "The new pipeline stage.",
+            "examples": [
+              "qualified"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "LeadStatusUpdate",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "Sayan Khutia",
+      "url": "https://github.com/i-sayankh/lead-tracker"
+    },
+    "description": "\nA small CRM-style API for tracking sales leads: create a lead, list and search leads,\nand move a lead through the pipeline by updating its status.\n\n## Lead status\n\n| Value | Meaning |\n|---|---|\n| `new` | Just created; nobody has reached out yet (default). |\n| `contacted` | First contact has been made. |\n| `qualified` | The lead is a real opportunity. |\n| `lost` | The lead will not convert. |\n\nAny status may follow any other.\n\n## Pagination\n\n`GET /api/v1/leads` takes `limit` (1–100, default 20) and `offset` (default 0) and returns\n`total`, the number of leads matching the filters regardless of pagination. Results are\nordered newest first.\n\n## Errors\n\nEvery non-2xx response uses the same `ErrorResponse` envelope. Branch on `error.code`;\n`error.message` is for humans. `error.details` lists each invalid field for validation\nand conflict errors and is `null` otherwise.\n\n```json\n{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Request validation failed.\",\n    \"details\": [\n      {\n        \"field\": \"body.email\",\n        \"message\": \"value is not a valid email address: An email address must have an @-sign.\",\n        \"type\": \"value_error\"\n      }\n    ]\n  }\n}\n```\n\n| Status | `code` |\n|---|---|\n| 404 | `LEAD_NOT_FOUND`, `ROUTE_NOT_FOUND` |\n| 405 | `METHOD_NOT_ALLOWED` |\n| 409 | `LEAD_EMAIL_CONFLICT` |\n| 422 | `VALIDATION_ERROR` |\n| 500 | `INTERNAL_ERROR` |\n| 503 | `SERVICE_UNAVAILABLE` |\n",
+    "summary": "Create, list, search and update the status of sales leads.",
+    "title": "Lead Tracker API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "description": "Runs `SELECT 1` against the database. Used as the deployment health check.\n\n**Errors**\n\n- `503 SERVICE_UNAVAILABLE`: the database cannot be reached.",
+        "operationId": "health_check",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "The API and its database are reachable."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "database_unreachable": {
+                    "summary": "Database down",
+                    "value": {
+                      "error": {
+                        "code": "SERVICE_UNAVAILABLE",
+                        "message": "Database is unreachable."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The database is unreachable."
+          }
+        },
+        "summary": "Check API and database health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/leads": {
+      "get": {
+        "description": "Returns one page of leads ordered newest first (`created_at` descending, then `id`).\n\n- `q` does a case-insensitive substring match on name, email **or** phone. `%` and `_` are matched literally. An empty or whitespace-only `q` means no filter.\n- `status` keeps only leads in that stage. It combines with `q`.\n- `total` is the number of leads matching the filters, ignoring `limit`/`offset`.\n\n**Errors**\n\n- `422 VALIDATION_ERROR`: a query parameter is out of bounds or not an allowed value.\n- `500 INTERNAL_ERROR`: unexpected server error.",
+        "operationId": "list_leads",
+        "parameters": [
+          {
+            "description": "Case-insensitive substring to match against name, email or phone. Trimmed; empty means no filter.",
+            "examples": {
+              "name": {
+                "summary": "Match a name",
+                "value": "jane"
+              }
+            },
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Case-insensitive substring to match against name, email or phone. Trimmed; empty means no filter.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Only return leads in this stage.",
+            "examples": {
+              "contacted": {
+                "summary": "Contacted",
+                "value": "contacted"
+              }
+            },
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LeadStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only return leads in this stage.",
+              "title": "Status"
+            }
+          },
+          {
+            "description": "Page size (1–100).",
+            "examples": {
+              "default": {
+                "summary": "Default",
+                "value": 20
+              }
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Page size (1–100).",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of matching leads to skip.",
+            "examples": {
+              "first_page": {
+                "summary": "First page",
+                "value": 0
+              }
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Number of matching leads to skip.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadPage"
+                }
+              }
+            },
+            "description": "A page of leads and the total number matching the filters."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "limit_too_small": {
+                    "summary": "limit=0",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "details": [
+                          {
+                            "field": "query.limit",
+                            "message": "Input should be greater than or equal to 1",
+                            "type": "greater_than_equal"
+                          }
+                        ],
+                        "message": "Request validation failed."
+                      }
+                    }
+                  },
+                  "unknown_status": {
+                    "summary": "status=unknown",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "details": [
+                          {
+                            "field": "query.status",
+                            "message": "Input should be 'new', 'contacted', 'qualified' or 'lost'",
+                            "type": "enum"
+                          }
+                        ],
+                        "message": "Request validation failed."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request failed validation. `details` lists every invalid field."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "internal_error": {
+                    "summary": "Unexpected error",
+                    "value": {
+                      "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": "An unexpected error occurred."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error. The cause is logged server-side and never returned."
+          }
+        },
+        "summary": "List and search leads",
+        "tags": [
+          "leads"
+        ]
+      },
+      "post": {
+        "description": "Creates a lead with status `new` unless another status is given.\n\n- `email` is lowercased and must be unique (case-insensitive).\n- `phone` is normalized by removing spaces, dashes, dots and parentheses; the result must be 7–15 digits, optionally prefixed with `+`.\n- Unknown fields are rejected.\n\n**Errors**\n\n- `409 LEAD_EMAIL_CONFLICT`: a lead with this email already exists.\n- `422 VALIDATION_ERROR`: a field is missing or invalid, the body is not valid JSON, or it contains an unknown field. `details` names each field.\n- `500 INTERNAL_ERROR`: unexpected server error.",
+        "operationId": "create_lead",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadRead"
+                }
+              }
+            },
+            "description": "The created lead."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "email_conflict": {
+                    "summary": "Duplicate email",
+                    "value": {
+                      "error": {
+                        "code": "LEAD_EMAIL_CONFLICT",
+                        "details": [
+                          {
+                            "field": "body.email",
+                            "message": "Email already exists",
+                            "type": "conflict"
+                          }
+                        ],
+                        "message": "A lead with email 'jane@acme.com' already exists."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "A lead with this email already exists (comparison is case-insensitive)."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "bad_phone": {
+                    "summary": "Invalid phone",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "details": [
+                          {
+                            "field": "body.phone",
+                            "message": "Phone must contain 7–15 digits, optionally prefixed with +",
+                            "type": "value_error"
+                          }
+                        ],
+                        "message": "Request validation failed."
+                      }
+                    }
+                  },
+                  "extra_field": {
+                    "summary": "Unknown field",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "details": [
+                          {
+                            "field": "body.company",
+                            "message": "Extra inputs are not permitted",
+                            "type": "extra_forbidden"
+                          }
+                        ],
+                        "message": "Request validation failed."
+                      }
+                    }
+                  },
+                  "invalid_email": {
+                    "summary": "Invalid email",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "details": [
+                          {
+                            "field": "body.email",
+                            "message": "value is not a valid email address: An email address must have an @-sign.",
+                            "type": "value_error"
+                          }
+                        ],
+                        "message": "Request validation failed."
+                      }
+                    }
+                  },
+                  "missing_name": {
+                    "summary": "Missing name",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "details": [
+                          {
+                            "field": "body.name",
+                            "message": "Field required",
+                            "type": "missing"
+                          }
+                        ],
+                        "message": "Request validation failed."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request failed validation. `details` lists every invalid field."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "internal_error": {
+                    "summary": "Unexpected error",
+                    "value": {
+                      "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": "An unexpected error occurred."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error. The cause is logged server-side and never returned."
+          }
+        },
+        "summary": "Create a lead",
+        "tags": [
+          "leads"
+        ]
+      }
+    },
+    "/api/v1/leads/{lead_id}/status": {
+      "patch": {
+        "description": "Sets the pipeline stage of one lead and returns the updated lead.\n\n- Any status may follow any other (there is no enforced transition order).\n- Setting the status a lead already has is an idempotent success (`200`).\n\n**Errors**\n\n- `404 LEAD_NOT_FOUND`: no lead has this id.\n- `422 VALIDATION_ERROR`: `lead_id` is not a UUID, the body is missing, `status` is missing or not an allowed value, or the body has an unknown field.\n- `500 INTERNAL_ERROR`: unexpected server error.",
+        "operationId": "update_lead_status",
+        "parameters": [
+          {
+            "description": "Id of the lead to update.",
+            "examples": {
+              "lead_id": {
+                "summary": "A lead id",
+                "value": "3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21"
+              }
+            },
+            "in": "path",
+            "name": "lead_id",
+            "required": true,
+            "schema": {
+              "description": "Id of the lead to update.",
+              "format": "uuid",
+              "title": "Lead Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadStatusUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadRead"
+                }
+              }
+            },
+            "description": "The lead with its updated status."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "lead_not_found": {
+                    "summary": "Unknown lead id",
+                    "value": {
+                      "error": {
+                        "code": "LEAD_NOT_FOUND",
+                        "message": "Lead '3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21' was not found."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The lead does not exist."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_status": {
+                    "summary": "Invalid status",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "details": [
+                          {
+                            "field": "body.status",
+                            "message": "Input should be 'new', 'contacted', 'qualified' or 'lost'",
+                            "type": "enum"
+                          }
+                        ],
+                        "message": "Request validation failed."
+                      }
+                    }
+                  },
+                  "malformed_uuid": {
+                    "summary": "Malformed lead id",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "details": [
+                          {
+                            "field": "path.lead_id",
+                            "message": "Input should be a valid UUID, invalid character: found `n` at 1",
+                            "type": "uuid_parsing"
+                          }
+                        ],
+                        "message": "Request validation failed."
+                      }
+                    }
+                  },
+                  "missing_body": {
+                    "summary": "Missing body",
+                    "value": {
+                      "error": {
+                        "code": "VALIDATION_ERROR",
+                        "details": [
+                          {
+                            "field": "body",
+                            "message": "Field required",
+                            "type": "missing"
+                          }
+                        ],
+                        "message": "Request validation failed."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request failed validation. `details` lists every invalid field."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "examples": {
+                  "internal_error": {
+                    "summary": "Unexpected error",
+                    "value": {
+                      "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": "An unexpected error occurred."
+                      }
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unexpected server error. The cause is logged server-side and never returned."
+          }
+        },
+        "summary": "Update a lead's status",
+        "tags": [
+          "leads"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "Create, list, search and update leads.",
+      "name": "leads"
+    },
+    {
+      "description": "Liveness and database connectivity.",
+      "name": "health"
+    }
+  ]
+}
