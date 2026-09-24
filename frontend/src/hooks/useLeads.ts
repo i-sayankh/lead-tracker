@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ApiError, listLeads, type LeadPage, type LeadStatus } from '../api/client'
+import { ApiError, listLeads, type Lead, type LeadPage, type LeadStatus } from '../api/client'
 
 export const PAGE_SIZE = 20
 /** After this long we assume the free-tier server is cold-starting and say so. */
@@ -20,6 +20,8 @@ export interface LeadsResult {
   /** The current request has been pending for longer than SLOW_REQUEST_MS. */
   slow: boolean
   reload: () => void
+  /** Swap in an updated lead without refetching (after a status change). */
+  replaceLead: (lead: Lead) => void
 }
 
 export function useLeads({ q, status, page }: Query): LeadsResult {
@@ -62,6 +64,11 @@ export function useLeads({ q, status, page }: Query): LeadsResult {
   }, [key, q, status, page])
 
   const reload = useCallback(() => setVersion((v) => v + 1), [])
+  const replaceLead = useCallback((lead: Lead) => {
+    setData((page) =>
+      page ? { ...page, items: page.items.map((l) => (l.id === lead.id ? lead : l)) } : page,
+    )
+  }, [])
   const loading = settled?.key !== key
 
   return {
@@ -70,5 +77,6 @@ export function useLeads({ q, status, page }: Query): LeadsResult {
     loading,
     slow: loading && slowKey === key,
     reload,
+    replaceLead,
   }
 }

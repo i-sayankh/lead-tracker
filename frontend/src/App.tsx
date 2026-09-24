@@ -3,6 +3,7 @@ import { EmptyState } from './components/EmptyState'
 import { LeadForm } from './components/LeadForm'
 import { LeadTable, LeadTableSkeleton } from './components/LeadTable'
 import { Pagination } from './components/Pagination'
+import { StatusSelect } from './components/StatusSelect'
 import { Toasts } from './components/Toasts'
 import { Toolbar } from './components/Toolbar'
 import { primaryButton, secondaryButton } from './components/buttons'
@@ -19,7 +20,7 @@ export default function App() {
   const [createOpen, setCreateOpen] = useState(false)
   const { toasts, push: toast, dismiss } = useToasts()
   const debouncedQ = useDebouncedValue(view.q, SEARCH_DEBOUNCE_MS)
-  const { data, error, loading, slow, reload } = useLeads({
+  const { data, error, loading, slow, reload, replaceLead } = useLeads({
     q: debouncedQ,
     status: view.status,
     page: view.page,
@@ -81,7 +82,16 @@ export default function App() {
     content = (
       <div className="flex flex-col gap-4">
         <div className={loading ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
-          <LeadTable leads={data.items} />
+          <LeadTable
+            leads={data.items}
+            renderStatus={(lead) => (
+              <StatusSelect
+                lead={lead}
+                onUpdated={replaceLead}
+                onError={(message) => toast(message, 'error')}
+              />
+            )}
+          />
         </div>
         <Pagination
           page={view.page}
