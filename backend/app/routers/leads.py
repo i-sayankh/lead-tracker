@@ -1,13 +1,14 @@
+import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Path, Query, status
 from sqlalchemy.orm import Session
 
 from app import services
 from app.db import get_db
 from app.errors import ErrorCode, error_example, error_responses
 from app.models import Lead
-from app.schemas import PHONE_RULE, LeadCreate, LeadPage, LeadRead, LeadStatus
+from app.schemas import PHONE_RULE, LeadCreate, LeadPage, LeadRead, LeadStatus, LeadStatusUpdate
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -155,3 +156,69 @@ def list_leads(
         limit=limit,
         offset=offset,
     )
+
+
+@router.patch(
+    "/{lead_id}/status",
+    response_model=LeadRead,
+    summary="Update a lead's status",
+    description=(
+        "Sets the pipeline stage of one lead and returns the updated lead.\n\n"
+        "- Any status may follow any other (there is no enforced transition order).\n"
+        "- Setting the status a lead already has is an idempotent success (`200`).\n\n"
+        "**Errors**\n\n"
+        "- `404 LEAD_NOT_FOUND`: no lead has this id.\n"
+        "- `422 VALIDATION_ERROR`: `lead_id` is not a UUID, the body is missing, `status` is "
+        "missing or not an allowed value, or the body has an unknown field.\n"
+        "- `500 INTERNAL_ERROR`: unexpected server error."
+    ),
+    response_description="The lead with its updated status.",
+    responses=error_responses(
+        404,
+        422,
+        500,
+        examples={
+            422: {
+                "invalid_status": error_example(
+                    "Invalid status",
+                    VALIDATION,
+                    FAILED,
+                    [
+                        (
+                            "body.status",
+                            "Input should be 'new', 'contacted', 'qualified' or 'lost'",
+                            "enum",
+                        )
+                    ],
+                ),
+                "malformed_uuid": error_example(
+                    "Malformed lead id",
+                    VALIDATION,
+                    FAILED,
+                    [
+                        (
+                            "path.lead_id",
+                            "Input should be a valid UUID, invalid character: found `n` at 1",
+                            "uuid_parsing",
+                        )
+                    ],
+                ),
+                "missing_body": error_example(
+                    "Missing body", VALIDATION, FAILED, [("body", "Field required", "missing")]
+                ),
+            }
+        },
+    ),
+)
+def update_lead_status(
+    lead_id: Annotated[
+        uuid.UUID,
+        Path(
+            description="Id of the lead to update.",
+            examples=["3f1c2a9e-8b7d-4c1e-9f0a-2b6d5e4c3a21"],
+        ),
+    ],
+    body: LeadStatusUpdate,
+    db: DbSession,
+) -> Lead:
+    return services.update_lead_status(db, lead_id, body.status)

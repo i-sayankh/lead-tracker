@@ -1,8 +1,10 @@
+import uuid
+
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.errors import LeadEmailConflictError
+from app.errors import LeadEmailConflictError, LeadNotFoundError
 from app.models import Lead
 from app.schemas import LeadCreate, LeadStatus
 
@@ -56,3 +58,13 @@ def list_leads(
         .offset(offset)
     ).all()
     return list(items), total
+
+
+def update_lead_status(db: Session, lead_id: uuid.UUID, status: LeadStatus) -> Lead:
+    """Set a lead's status. Any status may follow any other; the same status is a no-op."""
+    lead = db.get(Lead, lead_id)
+    if lead is None:
+        raise LeadNotFoundError(lead_id)
+    lead.status = status
+    db.commit()
+    return lead
